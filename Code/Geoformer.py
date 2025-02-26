@@ -47,8 +47,8 @@ class Geoformer(nn.Module):
 
     def forward(
         self,
-        predictor,
-        predictand,
+        predictor,    # 輸入數據
+        predictand,    # 預測目標
         in_mask=None,
         enout_mask=None,
         train=True,
@@ -61,7 +61,7 @@ class Geoformer(nn.Module):
         Returns:
             outvar_pred: (batch, pre_len, C, H, W)
         """
-        en_out = self.encode(predictor=predictor, in_mask=in_mask)
+        en_out = self.encode(predictor=predictor, in_mask=in_mask)    # 接收 predictor（歷史數據），生成一個上下文表示 en_out，用於後續解碼
         if train:
             with torch.no_grad():
                 connect_inout = torch.cat(
@@ -121,7 +121,7 @@ class Geoformer(nn.Module):
         en_out = self.encoder(predictor, in_mask)
         return en_out
 
-    def decode(self, predictand, en_out, out_mask, enout_mask):
+    def decode(self, predictand, en_out, out_mask, enout_mask):       # 解碼器根據編碼器輸出和當前已生成的序列逐步預測未來數據
         """
         Args:
             predictand: (B, pre_len, C, H, W)
