@@ -70,7 +70,7 @@ for i_file in files[: file_num + 1]:
     # 同樣針對預測：以 lead = 6, 9, 12 個月為例
     leads = [5, 8, 11] # 對應 lead=6, 9, 12
     sst_preds = [cut_var_pred[lead, :, sst_lev, equ_idx, :] for lead in leads]
-    taux_preds = [cut_var_pred[lead, :, equ_idx, :] for lead in leads]
+    taux_preds = [cut_var_pred[lead, :, 0, equ_idx, :] for lead in leads]
     
     # 第二步：繪圖 S8
     fig, axes = plt.subplots(1, 4, figsize=(18, 6), sharey=True)
