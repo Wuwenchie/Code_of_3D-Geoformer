@@ -10,13 +10,6 @@ from sklearn.metrics import mean_absolute_error
 from my_tools import cal_ninoskill2, runmean
 from func_for_prediction import func_pre
 
-mpl.use("Agg")
-plt.rc("font", family="Arial")
-mpl.rc("image", cmap="RdYlBu_r")
-plt.rcParams["xtick.direction"] = "in"
-plt.rcParams["ytick.direction"] = "in"
-
-
 def file_name(file_dir):
     L = []
     for root, dirs, files in os.walk(file_dir):
@@ -44,23 +37,18 @@ for i_file in files[: file_num + 1]:
         needtauxy=mypara.needtauxy,
     )
     # ---------------------------------------------------------
-    for l in range(lead_max):
-        aa = runmean(cut_nino_pred_jx[l], 3)
-        corr[l] = np.corrcoef(aa, bb)[0, 1]
-        mse[l] = mean_squared_error(aa, bb)
-        mae[l] = mean_absolute_error(aa, bb)
-        del aa, bb
     
     # 第一步：提取赤道上的 SST 和 τx 時間序列（橫跨所有年份）
     # 取得經度、時間軸
-    lon_vals = mypara.lon_values
+    lon_vals = mypara.lon_range
     time_vals = np.arange(len(cut_var_true)) # 或從原始資料讀 datetime
     
     # 找赤道最近緯度索引
-    lat_vals = mypara.lat_values
+    lat_vals = mypara.lat_range
     equ_idx = np.argmin(np.abs(lat_vals)) # 緯度最接近 0°
     
-    # 取出真實 SST/τx 與預測值，沿赤道切片
+    # 取出真實 SST/τx 與預測值，沿赤切片
+    sst_lev = 2
     sst_true = cut_var_true[:, sst_lev, equ_idx, :]
     taux_true = cut_var_true[:, 0, equ_idx, :]
     
