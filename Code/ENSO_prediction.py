@@ -46,16 +46,46 @@ for i_file in files[: file_num + 1]:
         adr_oridata=adr_oridata,
         needtauxy=mypara.needtauxy,
     )
-# ---------------------------------------------------------
-  for t in [0, 2, 5]: # 對應提前 6、9、12 個月的預測
-  sst = cut_var_pred[t, :, sst_lev, lat_idx_equator, :] # SST 沿赤道
-  taux = cut_var_pred[t, :, 0, lat_idx_equator, :] # τx
-  
-  plt.figure(figsize=(12, 5))
-  plt.contourf(lon_vals, time_vals, sst, levels=np.linspace(-2, 2, 21), cmap='RdBu_r')
-  plt.quiver(lon_vals[::4], time_vals[::4], taux[::4, ::4], np.zeros_like(taux[::4, ::4]), scale=5)
-  plt.title(f'SST + τx prediction, lead = {lead_months[t]}')
-  plt.xlabel('Longitude')
-  plt.ylabel('Time')
-  plt.colorbar(label='SST anomaly (°C)')
-  plt.show()
+    # ---------------------------------------------------------
+    # 第一步：提取赤道上的 SST 和 τx 時間序列（橫跨所有年份）
+    # 取得經度、時間軸
+    lon_vals = mypara.lon_values
+    time_vals = np.arange(len(cut_var_true)) # 或從原始資料讀 datetime
+    
+    # 找赤道最近緯度索引
+    lat_vals = mypara.lat_values
+    equ_idx = np.argmin(np.abs(lat_vals)) # 緯度最接近 0°
+    
+    # 取出真實 SST/τx 與預測值，沿赤道切片
+    sst_true = cut_var_true[:, sst_lev, equ_idx, :]
+    taux_true = cut_var_true[:, 0, equ_idx, :]
+    
+    # 同樣針對預測：以 lead = 6, 9, 12 個月為例
+    leads = [5, 8, 11] # 對應 lead=6, 9, 12
+    sst_preds = [cut_var_pred[lead, :, sst_lev, equ_idx, :] for lead in leads]
+    taux_preds = [cut_var_pred[lead, :, 0, equ_idx, :] for lead in leads]
+    
+    # 第二步：繪圖 S8
+    fig, axes = plt.subplots(1, 4, figsize=(18, 6), sharey=True)
+    
+    all_panels = [("a", "Analysis", sst_true, taux_true)]
+    for i, lead in enumerate([6, 9, 12]):
+        all_panels.append((chr(ord("b")+i), f"Lead={lead}", sst_preds[i], taux_preds[i]))
+    
+        for ax, (label, title, sst, taux) in zip(axes, all_panels):
+            X, Y = np.meshgrid(lon_vals, np.arange(sst.shape[0]))
+            ax.contourf(lon_vals, np.arange(sst.shape[0]), sst, levels=np.linspace(-2.5, 2.5, 21), cmap="RdBu_r", extend='both')
+            ax.quiver(
+            lon_vals[::3], np.arange(sst.shape[0])[::3],
+            taux[::3, ::3], np.zeros_like(taux[::3, ::3]),
+            scale=0.04, width=0.0025, headwidth=3
+            )
+            ax.axvline(x=180, color='k', linestyle='--') # dateline
+            ax.set_title(f"({label}) {title}")
+            ax.set_xlabel("Longitude")
+            ax.set_xlim([120, 280])
+            ax.set_xticks([120, 160, 200, 240, 280])
+            axes[0].set_ylabel("Time (months since start)")
+            plt.colorbar(axes[0].collections[0], ax=axes.ravel().tolist(), orientation='horizontal', pad=0.1, label='SST anomaly (°C)')
+            plt.tight_layout()
+            plt.savefig("figure_S8_like.png", dpi=300)
