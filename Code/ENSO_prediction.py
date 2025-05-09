@@ -36,9 +36,6 @@ adr_datain = (
 adr_oridata = "./data/GODAS_up150m_temp_nino_tauxy_kb.nc"
 # ---------------------------------------------------------
 for i_file in files[: file_num + 1]:
-    fig1 = plt.figure(figsize=(5, 2.5), dpi=300)
-    ax1 = fig1.add_subplot(1, 2, 1)
-    ax2 = fig1.add_subplot(1, 2, 2)
     (cut_var_pred, cut_var_true, cut_nino_pred, cut_nino_true,) = func_pre(
         mypara=mypara,
         adr_model=i_file,
