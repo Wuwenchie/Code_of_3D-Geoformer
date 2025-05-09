@@ -53,6 +53,7 @@ for i_file in files[: file_num + 1]:
         mse[l] = mean_squared_error(aa, bb)
         mae[l] = mean_absolute_error(aa, bb)
         del aa, bb
+    
     # 第一步：提取赤道上的 SST 和 τx 時間序列（橫跨所有年份）
     # 取得經度、時間軸
     lon_vals = mypara.lon_values
@@ -69,7 +70,7 @@ for i_file in files[: file_num + 1]:
     # 同樣針對預測：以 lead = 6, 9, 12 個月為例
     leads = [5, 8, 11] # 對應 lead=6, 9, 12
     sst_preds = [cut_var_pred[lead, :, sst_lev, equ_idx, :] for lead in leads]
-    taux_preds = [cut_var_pred[lead, :, 0, equ_idx, :] for lead in leads]
+    taux_preds = [cut_var_pred[lead, :, equ_idx, :] for lead in leads]
     
     # 第二步：繪圖 S8
     fig, axes = plt.subplots(1, 4, figsize=(18, 6), sharey=True)
@@ -94,4 +95,4 @@ for i_file in files[: file_num + 1]:
             axes[0].set_ylabel("Time (months since start)")
             plt.colorbar(axes[0].collections[0], ax=axes.ravel().tolist(), orientation='horizontal', pad=0.1, label='SST anomaly (°C)')
             plt.tight_layout()
-            plt.savefig("figure_S8_like.png", dpi=300)
+            plt.savefig("ENSO_prediction.png", dpi=300)
