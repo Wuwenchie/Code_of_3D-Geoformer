@@ -47,6 +47,12 @@ for i_file in files[: file_num + 1]:
         needtauxy=mypara.needtauxy,
     )
     # ---------------------------------------------------------
+    for l in range(lead_max):
+        aa = runmean(cut_nino_pred_jx[l], 3)
+        corr[l] = np.corrcoef(aa, bb)[0, 1]
+        mse[l] = mean_squared_error(aa, bb)
+        mae[l] = mean_absolute_error(aa, bb)
+        del aa, bb
     # 第一步：提取赤道上的 SST 和 τx 時間序列（橫跨所有年份）
     # 取得經度、時間軸
     lon_vals = mypara.lon_values
