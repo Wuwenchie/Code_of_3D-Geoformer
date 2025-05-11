@@ -33,10 +33,9 @@ def save_prediction_to_netcdf(
         cut_var_pred,
         mypara,
         adr_oridata,
-        output_path="Geoformer_prediction_output.nc",
-        start_time="1990-01-01",
+        output_path,
+        start_time,
         freq="MS",
-        var_names=["taux", "tauy", "temp1", "temp2", "temp3", "temp4", "temp5", "temp6", "temp7"]
     ):
     """
     儲存 Geoformer 預測輸出為 NetCDF 檔案
@@ -49,7 +48,6 @@ def save_prediction_to_netcdf(
     - output_path: 輸出的 .nc 檔路徑
     - start_time: 第一個預測起始月（ex. "1990-01"）
     - freq: 時間頻率（預設 "MS" = 月初）
-    - var_names: 每個通道的變數名稱（若不給，將使用 var_0, var_1,...）
     """
         lead, time_len, ch_n, lat_n, lon_n = cut_var_pred.shape
         assert ch_n >= 3, "通道數必須至少包含 taux, tauy, 與一層溫度"
@@ -108,7 +106,7 @@ for i_file in files[: file_num + 1]:
     save_prediction_to_netcdf(
         cut_var_pred=cut_var_pred,
         mypara=mypara,
-        adr_oridata="./data/GODAS_up150m_temp_nino_tauxy_kb.nc",
+        adr_oridata=adr_oridata,
         output_path="Geoformer_1983_2021_output.nc",
         start_time="1983-01-01"
     )
