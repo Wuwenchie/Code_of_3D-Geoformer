@@ -1,5 +1,6 @@
 from myconfig import mypara
 import numpy as np
+import pandas as pd
 from copy import deepcopy
 import matplotlib as mpl
 import matplotlib.pylab as plt
@@ -28,6 +29,73 @@ adr_datain = (
 )
 adr_oridata = "./data/GODAS_up150m_temp_nino_tauxy_kb.nc"
 # ---------------------------------------------------------
+def save_prediction_to_netcdf(
+        cut_var_pred,
+        mypara,
+        adr_oridata,
+        output_path="Geoformer_prediction_output.nc",
+        start_time="1990-01-01",
+        freq="MS",
+        var_names=["taux", "tauy", "temp1", "temp2", "temp3", "temp4", "temp5", "temp6", "temp7"]
+    ):
+    """
+    儲存 Geoformer 預測輸出為 NetCDF 檔案
+    - cut_var_pred: shape = [lead, time, channel, lat, lon]
+        - channel 0: taux
+        - channel 1: tauy
+        - channel 2+: sea temperature at depth
+    - mypara: 包含 lat_range, lon_range, lev_range
+    - adr_oridata: 原始檔案，用於取得 lat/lon 資訊
+    - output_path: 輸出的 .nc 檔路徑
+    - start_time: 第一個預測起始月（ex. "1990-01"）
+    - freq: 時間頻率（預設 "MS" = 月初）
+    - var_names: 每個通道的變數名稱（若不給，將使用 var_0, var_1,...）
+    """
+        lead, time_len, ch_n, lat_n, lon_n = cut_var_pred.shape
+        assert ch_n >= 3, "通道數必須至少包含 taux, tauy, 與一層溫度"
+        # 建立座標
+        ds_ref = xr.open_dataset(adr_oridata)
+        lat_vals = ds_ref['lat'].values[mypara.lat_range[0]:mypara.lat_range[1]]
+        lon_vals = ds_ref['lon'].values[mypara.lon_range[0]:mypara.lon_range[1]]
+        ds_ref.close()
+        
+        lev_vals = np.arange(mypara.lev_range[0], mypara.lev_range[1])
+        lead_vals = np.arange(1, lead_max+1)
+        time_vals = pd.date_range(start=start_time, periods=time_len, freq=freq)
+
+        # 建立資料變數
+        taux = (("lead_time", "time", "lat", "lon"), cut_var_pred[:, :, 0, :, :])
+        tauy = (("lead_time", "time", "lat", "lon"), cut_var_pred[:, :, 1, :, :])
+        sea_temp = (
+            ("lead_time", "time", "depth", "lat", "lon"),
+            cut_var_pred[:, :, 2:, :, :]
+        )
+
+        # 建立 xarray Dataset
+        ds = xr.Dataset(
+            data_vars={
+                "taux": taux,
+                "tauy": tauy,
+                "sea temperature": sea_temp
+            },
+            coords={
+                "lead_time": lead_vals,
+                "time": time_vals,
+                "depth": lev_vals,
+                "lat": lat_vals,
+                "lon": lon_vals
+            },
+            attrs={
+                "Production model": "3D-Geoformer",
+                "Description": "Multivariate prediction results in the tropical ocean from a self-attention-based neural network.",
+            }
+        )
+        
+        # 儲存
+        ds.to_netcdf(output_path)
+        print(f"✅ Saved NetCDF in expected Geoformer format: {output_path}")
+
+# ---------------------------------------------------------
 for i_file in files[: file_num + 1]:
     (cut_var_pred, cut_var_true, cut_nino_pred, cut_nino_true,) = func_pre(
         mypara=mypara,
@@ -37,7 +105,14 @@ for i_file in files[: file_num + 1]:
         needtauxy=mypara.needtauxy,
     )
     # ---------------------------------------------------------
-    
+    save_prediction_to_netcdf(
+        cut_var_pred=cut_var_pred,
+        mypara=mypara,
+        adr_oridata="./data/GODAS_up150m_temp_nino_tauxy_kb.nc",
+        output_path="Geoformer_1983_2021_output.nc",
+        start_time="1983-01-01"
+    )
+    # ---------------------------------------------------------    
     # 第一步：提取赤道上的 SST 和 τx 時間序列（橫跨所有年份）
     # 取得經度、時間軸
     lon_vals = mypara.lon_range
